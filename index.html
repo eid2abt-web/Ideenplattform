@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ============================================================
    WagDas! ZeigDas! — Interne Ideenplattform (Prototyp)
@@ -112,23 +113,22 @@ body.admin .admin-badge{ display:inline-block; }
    damit es links/rechts keinen blauen Rand gibt. Beim Scrollen bewegt es sich
    langsamer (Parallax, per JS) und wird vom Hero-Rand maskiert. */
 .hero-bg-logo{
-  position:absolute; left:0; right:0; bottom:-3%; z-index:0; pointer-events:none;
-  display:flex; flex-direction:column; align-items:flex-start; line-height:.82;
-  will-change:transform;
+  position:absolute; top:0; bottom:0; right:0; left:auto; z-index:0; pointer-events:none;
+  display:flex; flex-direction:column; justify-content:center; align-items:flex-end;
+  text-align:right; line-height:.92; will-change:transform;
 }
 .hero-bg-logo span{
-  font-weight:800; text-transform:uppercase; white-space:nowrap;
-  font-size:clamp(3.5rem, 15vw, 13rem); letter-spacing:-.03em;
-  color:#0E3A6B; padding-left:16px;
+  font-weight:800; white-space:nowrap;              /* bewusst KEIN Uppercase – wie die Wortmarke */
+  font-size:clamp(4.5rem, 14.5vw, 15rem); letter-spacing:-.045em;
+  color:#12437B; margin-right:-14px;                /* leicht angeschnitten = Poster-Look */
 }
-.hero-bg-logo span:nth-child(2){ color:#14497F; }
+.hero-bg-logo span:nth-child(2){ color:#1B559A; }
 .hero-inner{
   position:relative; z-index:1;
   max-width:1240px; margin:0 auto;
-  padding:64px 24px 56px;
-  display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr); gap:48px;
-  align-items:center;
+  padding:60px 24px 64px;
 }
+.hero-inner > div:first-child{ max-width:640px; }
 .hero h1{
   font-size:clamp(2rem, 4.2vw, 3.4rem);
   font-weight:800; line-height:1.08; letter-spacing:-.01em;
@@ -142,15 +142,31 @@ body.admin .admin-badge{ display:inline-block; }
 .hero .btn-ghost{ color:var(--white); border-color:var(--white); }
 .hero .btn-ghost:hover{ background:var(--white); color:var(--navy); }
 
-/* kleine "So funktioniert's"-Kacheln rechts im Hero */
-.hero-steps{ display:grid; gap:2px; background:var(--navy-2); border:1px solid var(--navy-2); }
-.hero-step{
-  background:var(--navy); padding:16px 18px;
-  display:flex; gap:14px; align-items:flex-start;
+/* USP-Zeile: Idee des Monats → Geschäftsführung */
+.hero-usp{
+  margin-top:24px; display:flex; gap:14px; align-items:flex-start; max-width:52ch;
 }
-.hero-step svg{ flex:none; width:26px; height:26px; stroke:var(--white); margin-top:2px; }
-.hero-step b{ display:block; font-size:.92rem; }
-.hero-step span{ font-size:.8rem; color:#9FB1C6; }
+.hero-usp svg{
+  flex:none; width:30px; height:30px; margin-top:2px;
+  stroke:var(--blau); fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+}
+.hero-usp b{ display:block; font-size:.92rem; }
+.hero-usp span{ font-size:.84rem; color:#9FB1C6; }
+
+/* ---------- Idee des Monats – schlanker Hinweisstreifen ---------- */
+.monthly-note{
+  display:none;                                  /* nur im Admin-Modus sichtbar */
+  background:var(--grau); font-size:.78rem; color:var(--ink-60);
+  text-align:center; padding:9px 24px;
+}
+body.admin .monthly-note{ display:block; }
+.monthly-note .linklike{
+  background:none; border:none; padding:0; margin-left:10px;
+  font-family:inherit; font-size:.78rem; font-weight:700;
+  color:var(--purpur); text-decoration:underline;
+}
+/* Anker landet sauber unter dem Sticky-Header statt dahinter */
+#feed{ scroll-margin-top:60px; }
 
 /* ---------- Tab-/Filterleiste ---------- */
 .toolbar{
@@ -170,11 +186,17 @@ body.admin .admin-badge{ display:inline-block; }
 .tab:hover{ color:var(--ink); }
 .tab[aria-selected="true"]{ color:var(--blau); border-bottom-color:var(--blau); }
 .toolbar-spacer{ flex:1; }
-.chips{ display:flex; gap:8px; flex-wrap:wrap; padding:10px 0; }
+.chips{
+  display:flex; gap:6px; flex-wrap:nowrap; padding:9px 0;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;                 /* eine Zeile, dezent scrollbar */
+}
+.chips::-webkit-scrollbar{ display:none; }
 .chip{
+  flex:none;
   border:1px solid var(--grau-2); background:var(--white);
-  font-size:.75rem; font-weight:600; color:var(--ink-60);
-  padding:5px 12px; border-radius:999px; /* Pills dürfen rund sein */
+  font-size:.68rem; font-weight:600; color:var(--ink-60);
+  padding:3px 10px; border-radius:999px; /* Pills dürfen rund sein */
 }
 .chip:hover{ border-color:var(--ink-60); color:var(--ink); }
 .chip.active{ background:var(--ink); border-color:var(--ink); color:var(--white); }
@@ -195,11 +217,10 @@ main{ max-width:1240px; margin:0 auto; padding:28px 24px 80px; }
 .card{
   background:var(--white);
   border:1px solid var(--grau);
-  box-shadow:var(--shadow);
   display:flex; flex-direction:column;
-  transition:box-shadow .2s, transform .2s;
+  transition:border-color .15s;
 }
-.card:hover{ box-shadow:0 2px 4px rgba(0,25,60,.08), 0 14px 34px rgba(0,25,60,.12); }
+.card:hover{ border-color:var(--grau-2); }
 .card.highlight{ outline:3px solid var(--blau); outline-offset:2px; }
 
 /* Medien-Grid: 1/2/3/4 Layouts */
@@ -216,9 +237,7 @@ main{ max-width:1240px; margin:0 auto; padding:28px 24px 80px; }
 .media-grid[data-n="3"] .media-item{ aspect-ratio:auto; min-height:90px; }
 .media-item img, .media-item video{
   width:100%; height:100%; object-fit:cover;
-  transition:transform .35s ease;
 }
-.card:hover .media-item img{ transform:scale(1.03); }
 .play-badge{
   position:absolute; inset:0; display:grid; place-items:center;
   background:rgba(0,25,60,.35);
@@ -261,12 +280,12 @@ main{ max-width:1240px; margin:0 auto; padding:28px 24px 80px; }
 }
 .act{
   background:transparent; border:none;
-  display:inline-flex; align-items:center; gap:7px;
-  font-size:.83rem; font-weight:700; color:var(--ink-60);
-  padding:7px 10px;
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:.78rem; font-weight:600; color:var(--ink-40);
+  padding:6px 9px;
 }
 .act:hover{ background:var(--grau); color:var(--ink); }
-.act svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.act svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .act-vote.voted{ color:var(--blau); }
 .act-vote.voted svg{ fill:var(--blau); stroke:var(--blau); }
 .act-vote .count{ min-width:1.5ch; text-align:left; }
@@ -303,6 +322,14 @@ body.admin .admin-bar{ display:flex; }
 }
 .admin-bar .abtn:hover{ background:var(--purpur); color:var(--white); }
 .admin-bar .abtn.on{ background:var(--purpur); color:var(--white); }
+.comment{ position:relative; }
+.comment .c-del{
+  display:none; margin-left:auto; flex:none; align-self:flex-start;
+  width:22px; height:22px; border:1px solid var(--grau-2); background:var(--white);
+  color:#B00013; font-size:.68rem; line-height:1;
+}
+.comment .c-del:hover{ background:#B00013; border-color:#B00013; color:var(--white); }
+body.admin .comment .c-del{ display:inline-flex; align-items:center; justify-content:center; }
 .admin-bar .abtn.danger{ border-color:#B00013; color:#B00013; }
 .admin-bar .abtn.danger:hover{ background:#B00013; color:var(--white); }
 .admin-bar .ainfo{ font-size:.72rem; color:var(--purpur); margin-left:auto; font-weight:600; }
@@ -400,26 +427,33 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
 /* ---------- Lightbox ---------- */
 .lightbox{
   position:fixed; inset:0; z-index:120; display:none;
-  background:rgba(0,8,20,.92);
+  background:rgba(0,6,16,.96);
   flex-direction:column; align-items:center; justify-content:center;
 }
 .lightbox.open{ display:flex; }
-.lb-stage{ max-width:min(1100px, 92vw); max-height:78vh; display:grid; place-items:center; }
-.lb-stage img, .lb-stage video{ max-width:100%; max-height:78vh; object-fit:contain; }
-.lb-counter{ color:var(--white); font-size:.85rem; font-weight:600; margin-top:16px; }
+.lb-stage{ max-width:min(1100px, 94vw); max-height:82vh; display:grid; place-items:center; }
+.lb-stage img, .lb-stage video{ max-width:100%; max-height:82vh; object-fit:contain; }
+/* dezenter Zähler oben links statt unten */
+.lb-counter{
+  position:fixed; top:22px; left:24px;
+  color:rgba(255,255,255,.55); font-size:.78rem; font-weight:600; letter-spacing:.06em;
+}
+/* Buttons ohne Kästen – nur feine Glyphen, wie in modernen Social-Galerien */
 .lb-btn{
   position:fixed; top:50%; transform:translateY(-50%);
-  width:48px; height:48px; border:none; background:rgba(255,255,255,.12);
-  color:var(--white); font-size:1.3rem; font-weight:800;
+  width:64px; height:80px; border:none; background:transparent;
+  color:rgba(255,255,255,.55); font-size:2.4rem; font-weight:300; line-height:1;
+  transition:color .15s;
 }
-.lb-btn:hover{ background:var(--blau); }
-.lb-prev{ left:18px; } .lb-next{ right:18px; }
+.lb-btn:hover{ color:var(--white); }
+.lb-prev{ left:6px; } .lb-next{ right:6px; }
 .lb-close{
-  position:fixed; top:18px; right:18px;
-  width:44px; height:44px; border:none; background:rgba(255,255,255,.12);
-  color:var(--white); font-size:1.15rem; font-weight:700;
+  position:fixed; top:12px; right:12px;
+  width:48px; height:48px; border:none; background:transparent;
+  color:rgba(255,255,255,.55); font-size:1.3rem; font-weight:300;
+  transition:color .15s;
 }
-.lb-close:hover{ background:var(--rot); }
+.lb-close:hover{ color:var(--white); }
 
 /* ---------- Toast ---------- */
 .toast{
@@ -442,7 +476,7 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px){
-  .hero-inner{ grid-template-columns:1fr; padding:44px 20px 40px; gap:28px; }
+  .hero-inner{ padding:40px 20px 44px; }
 }
 @media (max-width: 720px){
   .header-inner{ padding:12px 16px; gap:12px; }
@@ -462,7 +496,6 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
   html{ scroll-behavior:auto; }
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -491,27 +524,26 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
       <p class="sub">Ob Produktidee, besserer Ablauf, ein Tool, das dir das Leben leichter machen
       würde, oder etwas herrlich Verrücktes: Hier zählt jeder Einfall. Lass dir von KI in Minuten
       Bilder dazu bauen, schreib einen Satz und poste. Kein Konzeptpapier, kein Login, keine Ausreden.</p>
+      <div class="hero-usp">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4v1.5A3.5 3.5 0 0 0 7.5 10M17 5h3v1.5A3.5 3.5 0 0 1 16.5 10"/><path d="M12 13v4M8.5 21h7M9.5 17h5"/></svg>
+        <div>
+          <b>Die beste Idee des Monats landet bei der Geschäftsführung.</b>
+          <span>Vote nach oben und werde gesehen.</span>
+        </div>
+      </div>
       <div class="hero-cta">
         <button class="btn btn-primary" data-open-post><span class="chev">&gt;</span> Idee posten</button>
         <a class="btn btn-ghost" href="#feed">Ideen ansehen</a>
       </div>
     </div>
-    <div class="hero-steps" aria-label="So funktioniert es">
-      <div class="hero-step">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3v12M12 3l-4 4M12 3l4 4M4 15v5h16v-5"/></svg>
-        <div><b>Posten in 60 Sekunden</b><span>Ein Titel, ein Satz, optional Bilder oder ein Video.</span></div>
-      </div>
-      <div class="hero-step">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 20V9M12 9l-5 5M12 9l5 5"/><path d="M4 4h16"/></svg>
-        <div><b>Community voten lassen</b><span>Upvotes bringen deine Idee nach oben. Keine Downvotes.</span></div>
-      </div>
-      <div class="hero-step">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>
-        <div><b>Sichtbar bleiben</b><span>Kein Sprint, keine Deadline. Gute Ideen bleiben dauerhaft im Feed.</span></div>
-      </div>
-    </div>
   </div>
 </section>
+
+<!-- Idee des Monats – schlanker Hinweis unter dem Hero -->
+<div class="monthly-note">
+  Die Idee mit den meisten Votes am Monatsende geht – nach Prüfung durch das Plattformteam – als Empfehlung direkt an die Bosch-Geschäftsführung.
+  <button class="linklike" id="btnMonthly">Gewinner ermitteln &amp; E-Mail vorbereiten</button>
+</div>
 
 <!-- ================= TOOLBAR ================= -->
 <div class="toolbar" id="feed">
@@ -639,6 +671,40 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
   </div>
 </div>
 
+<!-- ================= MODAL: IDEE DES MONATS (Admin) ================= -->
+<div class="modal" id="monthlyModal" role="dialog" aria-modal="true" aria-labelledby="monthlyTitle">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2 id="monthlyTitle">Idee des Monats</h2>
+        <p id="monthlyWinnerInfo"></p>
+      </div>
+      <button class="modal-close" data-close-modal aria-label="Schließen">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="form-hint">Human in the loop: Es wird <b>nichts automatisch versendet</b>.
+      Du prüfst und bearbeitest den Entwurf – gesendet wird erst, wenn du es in deinem
+      Mailprogramm selbst tust.</p>
+      <div class="field">
+        <label for="mEmpf">An</label>
+        <input type="text" id="mEmpf" value="geschaeftsfuehrung@bosch.com">
+      </div>
+      <div class="field">
+        <label for="mBetreff">Betreff</label>
+        <input type="text" id="mBetreff">
+      </div>
+      <div class="field">
+        <label for="mBody">E-Mail-Entwurf <span>· frei editierbar</span></label>
+        <textarea id="mBody" style="min-height:220px"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btnMonthlyMail"><span class="chev">&gt;</span> In Mail-App öffnen</button>
+        <button class="btn btn-ghost" id="btnMonthlyCopy">Text kopieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ================= MODAL: RECHTE / DISCLAIMER ================= -->
 <div class="modal" id="legalModal" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
   <div class="modal-box">
@@ -681,16 +747,114 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
    über localStorage (mit Fallback, falls nicht verfügbar).
    ============================================================ */
 
-const SUPABASE_URL = "https://ctukaalrpegfunxqgime.supabase.co";
+/* ============================================================
+   SUPABASE (Cloud-Backend)
+   URL + anon key gesetzt → Cloud-Modus: Ideen, Kommentare und
+   Bilder liegen zentral in Supabase (Tabellen ideas/comments,
+   Storage-Bucket "idea-media"). Ohne Keys: localStorage-Modus.
+   ============================================================ */
+const SUPABASE_URL  = "https://ctukaalrpegfunxqgime.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0dWthYWxycGVnZnVueHFnaW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNzE3MjcsImV4cCI6MjA5ODY0NzcyN30.Nc4nrDK3xj8xwo5xyHlnoRDT5wPJpW-OwaKWcYJ8Omg";
-const supabaseClient = window.supabase && window.supabase.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
-(async()=>{
- try{
-   if(!supabaseClient) return;
-   const {error}=await supabaseClient.from("ideas").select("id").limit(1);
-   console.log("Supabase Test", error || "OK");
- }catch(e){console.error(e)}
-})();
+const BUCKET = "idea-media";
+const sb = (window.supabase && SUPABASE_URL && SUPABASE_ANON)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+const DB = {
+  cloud: !!sb,
+
+  /* Ideen + zugehörige Kommentare laden (comments = eigene Tabelle!) */
+  async loadPosts(){
+    const { data:ideas, error } = await sb.from("ideas")
+      .select("*").order("created_at", { ascending:false });
+    if(error) throw error;
+    const { data:comments } = await sb.from("comments")
+      .select("*").order("created_at", { ascending:true });
+    const byIdea = {};
+    (comments||[]).forEach(c => {
+      (byIdea[c.idea_id] = byIdea[c.idea_id] || []).push({
+        id:c.id, author:c.author||"anonym", text:c.text,
+        createdAt:Date.parse(c.created_at)||Date.now()
+      });
+    });
+    return (ideas||[]).map(r => ({
+      id:r.id, title:r.title, pitch:r.pitch, category:r.category,
+      author:r.author||"anonym",
+      createdAt:Date.parse(r.created_at)||Date.now(),
+      votes:r.votes||0, adminBoost:r.admin_boost||0, featured:!!r.featured,
+      media:Array.isArray(r.media)?r.media:[],
+      comments:byIdea[r.id]||[]
+    }));
+  },
+
+  /* Idee anlegen: Zeile einfügen → Bilder/Video in Storage laden → media-URLs setzen */
+  async addPost({title,pitch,category,author}, imageDataUrls, videoFile, phFallback){
+    const { data, error } = await sb.from("ideas")
+      .insert({ title, pitch, category, author, votes:1, admin_boost:0, featured:false, media:[] })
+      .select("id,created_at").single();
+    if(error) throw error;
+    const id = data.id;
+    const media = [];
+    for(let i=0; i<imageDataUrls.length; i++){
+      const url = await DB.uploadDataUrl(id, `bild-${i+1}.jpg`, imageDataUrls[i]);
+      media.push({ type:"img", src: url || imageDataUrls[i] }); // Fallback: dataURL direkt in DB
+    }
+    if(videoFile){
+      const safe = videoFile.name.replace(/[^\w.\-]/g, "_");
+      const vurl = await DB.uploadFile(id, "video-"+safe, videoFile, videoFile.type);
+      if(vurl) media.push({ type:"video", src:vurl, persist:true });
+    }
+    if(!media.length && phFallback) media.push(phFallback);
+    const up = await sb.from("ideas").update({ media }).eq("id", id);
+    if(up.error) console.error(up.error);
+    return { id, createdAt:Date.parse(data.created_at)||Date.now(), media };
+  },
+
+  async uploadDataUrl(id, name, dataUrl){
+    try{
+      const blob = await (await fetch(dataUrl)).blob();
+      return await DB.uploadFile(id, name, blob, "image/jpeg");
+    }catch(e){ console.error("Upload:", e); return null; }
+  },
+
+  async uploadFile(id, name, fileOrBlob, contentType){
+    try{
+      const path = `${id}/${name}`;
+      const { error } = await sb.storage.from(BUCKET)
+        .upload(path, fileOrBlob, { contentType, upsert:true });
+      if(error){ console.error("Storage:", error.message); return null; }
+      return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+    }catch(e){ console.error(e); return null; }
+  },
+
+  async updatePost(id, patch){
+    const { error } = await sb.from("ideas").update(patch).eq("id", id);
+    if(error) console.error(error);
+  },
+
+  async deletePost(id){
+    try{ await sb.from("comments").delete().eq("idea_id", id); }catch(e){}
+    try{
+      const { data } = await sb.storage.from(BUCKET).list(String(id));
+      if(data && data.length)
+        await sb.storage.from(BUCKET).remove(data.map(f => `${id}/${f.name}`));
+    }catch(e){}
+    const { error } = await sb.from("ideas").delete().eq("id", id);
+    if(error){ console.error(error); throw error; }
+  },
+
+  async addComment(ideaId, author, text){
+    const { data, error } = await sb.from("comments")
+      .insert({ idea_id:ideaId, author, text })
+      .select("id,created_at").single();
+    if(error) throw error;
+    return { id:data.id, createdAt:Date.parse(data.created_at)||Date.now() };
+  },
+
+  async deleteComment(id){
+    const { error } = await sb.from("comments").delete().eq("id", id);
+    if(error) console.error(error);
+  }
+};
 
 /* ---------- Kategorien & Farben (Bosch-Kernpalette) ---------- */
 const CATEGORIES = {
@@ -756,10 +920,7 @@ function seedPosts(){
       pitch:"Ein internes KI-Werkzeug, das Belege und Buchungen vorprüft und Prüfer:innen nur die wirklich auffälligen Fälle zeigt. Spart Stunden pro Prüfung – und niemand muss mehr 400 Zeilen manuell scannen.",
       category:"KI-Idee", author:"Dominik R.", createdAt:now-30*H,
       votes:47, adminBoost:10, featured:true,
-      media:[
-        {type:"img", src:ph("#9E2896", IC.document, "BELEG-SCAN")},
-        {type:"img", src:ph("#9E2896", IC.chartavg, "ANOMALIEN")}
-      ],
+      media:[ {type:"img", src:ph("#9E2896", IC.document, "BELEG-SCAN")} ],
       comments:[
         {author:"Anusha P.", text:"Bitte direkt mit dem TX.ai Team sprechen – das passt perfekt in die Roadmap.", createdAt:now-26*H},
         {author:"anonym", text:"Wichtig: Nachvollziehbarkeit der KI-Entscheidung für die Revision mitdenken.", createdAt:now-20*H}
@@ -770,11 +931,7 @@ function seedPosts(){
       pitch:"Der Schrauber erkennt Material und Schraube automatisch und stellt das Drehmoment selbst ein. Nie wieder überdrehte Schrauben, nie wieder Raten am Stellrad.",
       category:"Produktidee", author:"Max M.", createdAt:now-75*H,
       votes:63, adminBoost:0, featured:false,
-      media:[
-        {type:"img", src:ph("#007BC0", IC.wrench, "AUTO-TORQUE")},
-        {type:"img", src:ph("#007BC0", IC.wave, "SENSORIK")},
-        {type:"img", src:ph("#007BC0", IC.components, "MATERIAL-KI")}
-      ],
+      media:[ {type:"img", src:ph("#007BC0", IC.wrench, "AUTO-TORQUE")} ],
       comments:[
         {author:"Lorea A.", text:"Gibt es dazu schon Patente? Kurz recherchieren lohnt sich.", createdAt:now-50*H}
       ]
@@ -794,12 +951,7 @@ function seedPosts(){
       pitch:"Ersatzteile in stapelbaren Mehrwegboxen mit Pfandsystem statt Einwegkarton. Händler senden leere Boxen gesammelt zurück – weniger Müll, weniger Kosten, besseres Image.",
       category:"Nachhaltigkeit", author:"Julia K.", createdAt:now-120*H,
       votes:39, adminBoost:0, featured:false,
-      media:[
-        {type:"img", src:ph("#00884A", IC.collection, "MEHRWEG-BOX")},
-        {type:"img", src:ph("#00884A", IC.import, "RÜCKLAUF-LOGISTIK")},
-        {type:"img", src:ph("#00884A", IC.chartavg, "CO2-BILANZ")},
-        {type:"img", src:ph("#00884A", IC.chartup, "EINSPARUNG")}
-      ],
+      media:[ {type:"img", src:ph("#00884A", IC.collection, "MEHRWEG-BOX")} ],
       comments:[
         {author:"anonym", text:"Bitte an die Reinigung der Boxen denken – das killt sonst die Bilanz.", createdAt:now-90*H},
         {author:"Michael K.", text:"Es gab mal ein Pilotprojekt dazu, ich suche die Kontakte raus.", createdAt:now-70*H}
@@ -810,10 +962,7 @@ function seedPosts(){
       pitch:"Helm mit integrierter Sensorik: erkennt Stürze, ruft im Notfall Hilfe, koppelt sich mit dem eBike-System. Licht und Blinker direkt im Helm – Sicherheit als Ökosystem.",
       category:"Produktidee", author:"Jonas B.", createdAt:now-15*H,
       votes:22, adminBoost:0, featured:false,
-      media:[
-        {type:"img", src:ph("#007BC0", IC.device, "SMART HELMET")},
-        {type:"img", src:ph("#007BC0", IC.alertout, "CRASH-ALERT")}
-      ],
+      media:[ {type:"img", src:ph("#007BC0", IC.device, "SMART HELMET")} ],
       comments:[]
     },
     {
@@ -821,10 +970,7 @@ function seedPosts(){
       pitch:"Der Automat misst anonymisiert die Stimmung (freiwilliger Emoji-Tap beim Bezahlen) und zeigt dem Team ein Stimmungsbarometer. Bei Tiefpunkten: Gratis-Espresso für alle.",
       category:"Verrückte Idee", author:"anonym", createdAt:now-4*H,
       votes:31, adminBoost:0, featured:false,
-      media:[
-        {type:"img", src:ph("#00193C", IC.question, "MOOD-O-MAT")},
-        {type:"img", src:ph("#00193C", IC.team, "BAROMETER")}
-      ],
+      media:[ {type:"img", src:ph("#00193C", IC.question, "MOOD-O-MAT")} ],
       comments:[
         {author:"Kim", text:"Ich lache, aber ich würde es sofort benutzen.", createdAt:now-2*H}
       ]
@@ -860,10 +1006,11 @@ let activeTab = "beliebt";
 let activeCat = null;
 
 function persist(){
+  store.set("wagdas-voted-v1", voted);
+  if(DB.cloud) return;   // Cloud ist die Quelle der Wahrheit – nur Voted-Status bleibt lokal
   // Videos (Blob-URLs) überleben keinen Reload → beim Speichern entfernen
   const clean = posts.map(p => ({ ...p, media: p.media.filter(m => m.type !== "video" || m.persist) }));
   store.set("wagdas-posts-v1", clean);
-  store.set("wagdas-voted-v1", voted);
 }
 
 /* ---------- Utilities ---------- */
@@ -936,12 +1083,13 @@ function cardHTML(p){
   const cat = CATEGORIES[p.category] || { color:"#4E5256" };
   const boosted = (p.adminBoost||0) > 0;
   const isVoted = !!voted[p.id];
-  const commentsHTML = p.comments.map(c=>`
-    <div class="comment">
+  const commentsHTML = p.comments.map((c,ci)=>`
+    <div class="comment" data-ci="${ci}">
       <div class="avatar" style="background:${CATEGORIES[p.category]?.color || '#00193C'}">${initials(c.author)}</div>
       <div><b>${esc(c.author||"anonym")}</b> · <span style="color:var(--ink-40);font-size:.72rem">${timeAgo(c.createdAt)}</span>
         <p>${esc(c.text)}</p>
       </div>
+      <button class="c-del" data-act="del-comment" aria-label="Kommentar löschen" title="Kommentar löschen">✕</button>
     </div>`).join("");
 
   return `<article class="card" id="idee-${p.id}" data-id="${p.id}">
@@ -1025,7 +1173,7 @@ $("#catChips").addEventListener("click", e => {
 });
 
 /* ---------- Events: Feed (Delegation) ---------- */
-$("#feedGrid").addEventListener("click", e => {
+$("#feedGrid").addEventListener("click", async e => {
   const card = e.target.closest(".card");
   if(!card) return;
   const post = posts.find(p => p.id === card.dataset.id);
@@ -1048,6 +1196,7 @@ $("#feedGrid").addEventListener("click", e => {
       el.querySelector(".count").textContent = effScore(post);
       el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
       persist();
+      if(DB.cloud) DB.updatePost(post.id, { votes: post.votes });
       break;
     }
     case "comments":
@@ -1057,7 +1206,14 @@ $("#feedGrid").addEventListener("click", e => {
       const text = card.querySelector(".comment-form .c-text").value.trim();
       const name = card.querySelector(".comment-form .c-name").value.trim();
       if(!text) return;
-      post.comments.push({ author:(name || "anonym"), text, createdAt:Date.now() });
+      const newC = { id:"c"+Date.now(), author:(name || "anonym"), text, createdAt:Date.now() };
+      if(DB.cloud){
+        try{
+          const saved = await DB.addComment(post.id, newC.author, text);
+          newC.id = saved.id; newC.createdAt = saved.createdAt;
+        }catch(err){ console.error(err); toast("Kommentar konnte nicht gespeichert werden"); return; }
+      }
+      post.comments.push(newC);
       persist(); render();
       const c = document.getElementById("idee-"+post.id);
       c?.querySelector("[data-comments]")?.classList.add("open");
@@ -1067,22 +1223,42 @@ $("#feedGrid").addEventListener("click", e => {
     case "share": sharePost(post); break;
     case "boost":
       post.adminBoost = (post.adminBoost||0) + 10;
+      if(DB.cloud) DB.updatePost(post.id, { admin_boost: post.adminBoost });
       persist(); render();
       toast(`„${post.title}" geboostet (+10)`);
       break;
     case "feature":
       post.featured = !post.featured;
+      if(DB.cloud) DB.updatePost(post.id, { featured: post.featured });
       persist(); render();
       toast(post.featured ? "Als Admin Pick markiert" : "Admin Pick entfernt");
       break;
     case "delete":
       if(confirm(`Idee „${post.title}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)){
+        if(DB.cloud){
+          try{ await DB.deletePost(post.id); }
+          catch(err){ toast("Löschen in der Cloud fehlgeschlagen"); break; }
+        }
         posts = posts.filter(p => p.id !== post.id);
         delete voted[post.id];
         persist(); render();
         toast("Idee gelöscht");
       }
       break;
+    case "del-comment": {
+      const row = e.target.closest(".comment");
+      if(!row) break;
+      const ci = +row.dataset.ci;
+      const c = post.comments[ci];
+      if(!c) break;
+      if(!confirm("Kommentar wirklich löschen?")) break;
+      if(DB.cloud && c.id) await DB.deleteComment(c.id);
+      post.comments.splice(ci, 1);
+      persist(); render();
+      document.getElementById("idee-"+post.id)?.querySelector("[data-comments]")?.classList.add("open");
+      toast("Kommentar gelöscht");
+      break;
+    }
   }
 });
 
@@ -1235,7 +1411,7 @@ $("#btnVideo").addEventListener("click", ()=>$("#fileVideo").click());
 $("#fileVideo").addEventListener("change", e=>{
   const f = e.target.files[0];
   if(!f) return;
-  formVideo = { src:URL.createObjectURL(f), name:f.name };
+  formVideo = { src:URL.createObjectURL(f), name:f.name, file:f };
   $("#vidPreview").innerHTML =
     `<div class="up-thumb"><div class="vph">▶ VIDEO</div>
      <button type="button" data-rm-vid aria-label="Video entfernen">✕</button></div>
@@ -1265,30 +1441,46 @@ $("#btnPublish").addEventListener("click", async ()=>{
   if(!pitch)   return showError("Ein Satz Pitch reicht – aber einer muss sein.");
   if(!formCat) return showError("Wähle eine Kategorie.");
 
-  const media = formImages.map(src=>({ type:"img", src }));
-  if(formVideo) media.push({ type:"video", src:formVideo.src });
-  if(!media.length){
-    // Kein Upload? Automatischer Kategorie-Platzhalter, damit die Card visuell bleibt.
-    media.push({ type:"img", src:ph(CATEGORIES[formCat].color, IC.data, formCat.toUpperCase()) });
-  }
+  const author = $("#fAuthor").value.trim() || "anonym";
+  // Kein Upload? Eine Fläche, ein Icon – automatischer Kategorie-Platzhalter.
+  const phMedia = { type:"img", src:ph(CATEGORIES[formCat].color, IC.data, formCat.toUpperCase()) };
 
-  const post = {
-    id:"p"+Date.now(),
-    title, pitch,
-    category:formCat,
-    author:($("#fAuthor").value.trim() || "anonym"),
-    createdAt:Date.now(),
-    votes:1, adminBoost:0, featured:false,
-    media, comments:[]
-  };
+  let post;
+  if(DB.cloud){
+    const btn = $("#btnPublish");
+    btn.disabled = true; btn.textContent = "Wird hochgeladen …";
+    try{
+      const saved = await DB.addPost(
+        { title, pitch, category:formCat, author },
+        formImages, (formVideo && formVideo.file) || null, phMedia
+      );
+      post = {
+        id:saved.id, title, pitch, category:formCat, author,
+        createdAt:saved.createdAt, votes:1, adminBoost:0, featured:false,
+        media:saved.media, comments:[]
+      };
+    }catch(err){
+      console.error(err);
+      showError("Cloud-Speichern fehlgeschlagen: " + (err.message || err));
+      btn.disabled = false;
+      btn.innerHTML = '<span class="chev">&gt;</span> Idee veröffentlichen';
+      return;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<span class="chev">&gt;</span> Idee veröffentlichen';
+  }else{
+    const media = formImages.map(src=>({ type:"img", src }));
+    if(formVideo) media.push({ type:"video", src:formVideo.src });
+    if(!media.length) media.push(phMedia);
+    post = {
+      id:"p"+Date.now(), title, pitch, category:formCat, author,
+      createdAt:Date.now(), votes:1, adminBoost:0, featured:false,
+      media, comments:[]
+    };
+  }
   voted[post.id] = true;      // eigener Post = erster Vote
   posts.unshift(post);
   persist();
-  if(supabaseClient){
-    try{
-      await supabaseClient.from("ideas").insert({title:post.title,pitch:post.pitch,category:post.category,author:post.author,votes:post.votes,admin_boost:0,featured:false,media:post.media,comments:[]});
-    }catch(e){console.error(e);}
-  }
 
   // Formular zurücksetzen
   $("#fTitle").value=""; $("#fPitch").value=""; $("#fAuthor").value="";
@@ -1385,42 +1577,90 @@ function tryAdminLogin(){
 $("#btnAdminSubmit").addEventListener("click", tryAdminLogin);
 $("#adminCode").addEventListener("keydown", e=>{ if(e.key==="Enter") tryAdminLogin(); });
 
+/* ---------- Idee des Monats (Admin, Human-in-the-Loop) ----------
+   Ermittelt den Post mit den meisten Votes im aktuellen Kalendermonat
+   und baut einen E-Mail-ENTWURF. Versand nur manuell durch den Admin. */
+function topIdeaOfMonth(){
+  const now = new Date();
+  let list = posts.filter(p=>{
+    const d = new Date(p.createdAt);
+    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  });
+  const inMonth = list.length > 0;
+  if(!inMonth) list = [...posts];             // Fallback: bester Post insgesamt
+  list.sort((a,b)=>b.votes-a.votes);          // bewusst reine Community-Votes, ohne Admin-Boost
+  return { winner:list[0], inMonth };
+}
+$("#btnMonthly").addEventListener("click", ()=>{
+  if(!adminOn) return;
+  const { winner, inMonth } = topIdeaOfMonth();
+  if(!winner){ toast("Keine Ideen vorhanden."); return; }
+  const monat = new Date().toLocaleDateString("de-DE",{ month:"long", year:"numeric" });
+  $("#monthlyWinnerInfo").textContent =
+    `${inMonth ? "Meiste Votes in "+monat : "Keine Idee aus "+monat+" – bester Beitrag insgesamt"}: „${winner.title}" (${winner.votes} Votes)`;
+  $("#mBetreff").value = `WagDas! ZeigDas! – Idee des Monats ${monat}: „${winner.title}"`;
+  $("#mBody").value =
+`Sehr geehrte Geschäftsführung,
+
+die Community unserer internen Ideenplattform WagDas! ZeigDas! hat gewählt: Die Idee des Monats ${monat} ist
+
+„${winner.title}"
+von ${winner.author||"anonym"} · ${winner.votes} Community-Votes · Kategorie: ${winner.category}
+
+Pitch:
+${winner.pitch}
+
+Link zur Idee: ${postUrl(winner)}
+
+Der Beitrag wurde vom Plattformteam gesichtet und wird hiermit zur weiteren Prüfung empfohlen.
+
+Mit freundlichen Grüßen
+Das WagDas! ZeigDas! Plattformteam`;
+  openModal("#monthlyModal");
+});
+$("#btnMonthlyMail").addEventListener("click", ()=>{
+  const url = `mailto:${encodeURIComponent($("#mEmpf").value.trim())}`+
+    `?subject=${encodeURIComponent($("#mBetreff").value)}`+
+    `&body=${encodeURIComponent($("#mBody").value)}`;
+  location.href = url;   // öffnet das Mailprogramm – gesendet wird manuell
+});
+$("#btnMonthlyCopy").addEventListener("click", async ()=>{
+  const text = `An: ${$("#mEmpf").value}\nBetreff: ${$("#mBetreff").value}\n\n${$("#mBody").value}`;
+  toast(await copyText(text) ? "Entwurf kopiert" : "Kopieren nicht möglich");
+});
+
 /* ---------- Hero-Parallax (Ghost-Logo bewegt sich langsamer) ---------- */
 (function heroParallax(){
   const logo = $(".hero-bg-logo");
   if(!logo) return;
-  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   let ticking = false;
   window.addEventListener("scroll", ()=>{
     if(ticking) return;
     ticking = true;
     requestAnimationFrame(()=>{
-      logo.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+      logo.style.transform = `translateY(${window.scrollY * 0.55}px)`;
       ticking = false;
     });
   }, { passive:true });
 })();
 
-
-async function loadIdeasFromSupabase(){
-  if(!supabaseClient) return;
-  try{
-    const {data,error}=await supabaseClient.from("ideas").select("*").order("created_at",{ascending:false});
-    if(error){console.error(error);return;}
-    if(Array.isArray(data)&&data.length){
-      posts=data.map(r=>({id:r.id,title:r.title,pitch:r.pitch,category:r.category,author:r.author||"anonym",createdAt:Date.parse(r.created_at)||Date.now(),votes:r.votes||0,adminBoost:r.admin_boost||0,featured:r.featured||false,media:r.media||[],comments:r.comments||[]}));
-    }
-  }catch(e){console.error(e);}
-}
 /* ---------- Init ---------- */
-(async()=>{
-await loadIdeasFromSupabase();
-buildChips();
-buildCatSelect();
-applyAdmin();
-render();
+(async ()=>{
+  if(DB.cloud){
+    try{
+      posts = await DB.loadPosts();   // Cloud ist die Quelle der Wahrheit
+    }catch(err){
+      console.error("Supabase nicht erreichbar – lokaler Modus:", err);
+      toast("Cloud nicht erreichbar – zeige lokale Daten");
+    }
+  }
+  buildChips();
+  buildCatSelect();
+  applyAdmin();
+  render();
+  handleHash();
 })();
-handleHash();
 window.addEventListener("hashchange", handleHash);
 </script>
 </body>
