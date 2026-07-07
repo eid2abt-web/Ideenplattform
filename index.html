@@ -2,6 +2,9 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="theme-color" content="#00193C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Die kleinen KI-Ideen – Die Bosch-Ideenplattform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -538,11 +541,11 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px){
-  .hero-inner{ padding:40px 20px 44px; }
-  .hero-features{ flex-direction:column; gap:18px; max-width:none; }
-  .hf{ padding:0 0 0 16px; border-left:2px solid rgba(255,255,255,.16); }
-  .hf:first-child{ padding-left:16px; border-left:2px solid rgba(255,255,255,.16); }
-  .hf svg{ margin-bottom:8px; }
+  .hero-inner{ padding:36px 20px 40px; }
+  /* Auf schmalen Screens: die drei Erklär-Blöcke weglassen –
+     Headline + Subline + Buttons reichen, der Hero bleibt kompakt. */
+  .hero-features{ display:none; }
+  .hero-cta{ margin-top:22px; }
 }
 @media (max-width: 720px){
   .header-inner{ padding:12px 16px; gap:12px; }
@@ -554,8 +557,10 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
   .tab{ padding:12px 10px 9px; font-size:.83rem; }
   main{ padding:20px 16px 90px; }
   .feed{ grid-template-columns:1fr; }
-  .modal{ padding:0; align-items:stretch; }
-  .modal-box{ max-width:none; min-height:100%; }
+  /* flex-start statt stretch: sonst wird die weiße Box auf exakt
+     Bildschirmhöhe fixiert und der Inhalt läuft unten heraus. */
+  .modal{ padding:0; align-items:flex-start; }
+  .modal-box{ max-width:none; min-height:100vh; min-height:100dvh; }
 }
 @media (prefers-reduced-motion: reduce){
   *{ animation:none !important; transition:none !important; }
@@ -647,6 +652,8 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
     <div class="fcol">
       <b>Spielregeln</b>
       <p><button class="linklike" data-open-legal>Ideenrechte &amp; Nutzung – kurz erklärt</button></p>
+      <p class="fine">Kein Tracking, keine Werbe-Cookies. Der Browser speichert nur lokal,
+      wofür du gevotet hast und welche Ideen von dir stammen.</p>
       <p class="fine">Diese Plattform wird moderiert. Die Moderation behält sich vor, Beiträge
       nach eigenem Ermessen zu bearbeiten oder zu entfernen – etwa wenn sie unpassend, themenfremd
       oder nicht im Sinne eines respektvollen Miteinanders sind. Ein Anspruch auf Veröffentlichung
@@ -835,6 +842,12 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
       Gibst du sie an, sehen sie alle auf der Plattform – damit Kolleg:innen dich zu deiner Idee
       ansprechen können. Willst du das nicht: einfach anonym posten. Du kannst deine eigene Idee
       jederzeit selbst löschen.</p>
+      <p style="margin-bottom:12px"><b style="color:var(--ink)">Datenschutz in Kürze</b><br>
+      Gespeichert wird nur, was du selbst eingibst: Idee, Bilder/Video, optional Name und
+      E-Mail – auf Servern unseres Datenbank-Dienstes (Supabase). Kein Tracking, keine
+      Analyse-Cookies; dein Browser merkt sich lediglich lokal, wofür du gevotet hast.
+      Deine eigene Idee kannst du jederzeit selbst löschen; für alles Weitere
+      (z.&nbsp;B. Kommentare mit deinem Namen) hilft das Plattformteam.</p>
       <p style="font-size:.8rem">Diese Hinweise sind eine Orientierung, keine Rechtsberatung.
       Verbindlich sind die internen Bosch-Regeln (IP, Compliance, Datenschutz).
       Im Zweifel: Patentabteilung oder Legal fragen.</p>
@@ -1509,7 +1522,11 @@ function handleHash(){
 }
 
 /* ---------- Modals ---------- */
-function openModal(sel){ $(sel).classList.add("open"); document.body.style.overflow="hidden"; }
+function openModal(sel){
+  $(sel).classList.add("open");
+  document.body.style.overflow="hidden";
+  if(sel === "#postModal") setTimeout(()=> $("#fTitle")?.focus(), 60);
+}
 function closeModals(){
   $$(".modal").forEach(m=>m.classList.remove("open"));
   document.body.style.overflow="";
@@ -1843,6 +1860,14 @@ $("#btnMonthlyCopy").addEventListener("click", async ()=>{
   toast(await copyText(text) ? "Entwurf kopiert" : "Kopieren nicht möglich");
 });
 
+/* Enter im Kommentarfeld sendet den Kommentar direkt */
+$("#feedGrid").addEventListener("keydown", e=>{
+  if(e.key === "Enter" && e.target.classList.contains("c-text")){
+    e.preventDefault();
+    e.target.closest(".comment-form")?.querySelector('[data-act="send-comment"]')?.click();
+  }
+});
+
 /* ---------- Hero-Parallax: Grafik bewegt sich beim Scrollen langsamer ---------- */
 (function heroParallax(){
   const img = $(".hero-bg-img");
@@ -1858,6 +1883,13 @@ $("#btnMonthlyCopy").addEventListener("click", async ()=>{
     });
   }, { passive:true });
 })();
+
+/* ---------- PWA: Service Worker (macht die Seite installierbar) ---------- */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{ /* offline ist optional */ });
+  });
+}
 
 /* ---------- Init ---------- */
 (async ()=>{
