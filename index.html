@@ -165,6 +165,16 @@ body.admin .admin-badge{ display:inline-block; }
 .hf b{ display:block; font-size:.94rem; margin-bottom:4px; }
 .hf span{ font-size:.8rem; color:#B4C4D6; line-height:1.4; }
 
+/* Suche in der Toolbar */
+.searchbox{
+  flex:none; width:150px;
+  border:1px solid var(--grau-2); background:var(--white);
+  font-family:inherit; font-size:.8rem; color:var(--ink);
+  padding:6px 12px; border-radius:999px;
+}
+.searchbox:focus{ outline:none; border-color:var(--blau); }
+.searchbox::placeholder{ color:var(--ink-40); }
+
 /* ---------- Idee des Monats – schlanker Hinweisstreifen ---------- */
 .monthly-note{
   display:none;                                  /* nur im Admin-Modus sichtbar */
@@ -218,6 +228,7 @@ main{ max-width:1240px; margin:0 auto; padding:28px 24px 80px; }
 .feed{
   display:grid; gap:24px;
   grid-template-columns:repeat(auto-fill, minmax(330px, 1fr));
+  align-items:start;             /* Karten behalten ihre natürliche Höhe */
 }
 .feed-empty{
   grid-column:1/-1; text-align:center; padding:70px 20px;
@@ -236,17 +247,15 @@ main{ max-width:1240px; margin:0 auto; padding:28px 24px 80px; }
 .card.highlight{ outline:3px solid var(--blau); outline-offset:2px; }
 
 /* Medien-Grid: 1/2/3/4 Layouts */
-.media-grid{ display:grid; gap:2px; background:var(--white); cursor:pointer; }
+/* Einheitliche Medienhöhe für ALLE Karten – egal ob 1 oder 4 Bilder.
+   Das macht den Feed ruhig und die Kacheln vergleichbar groß. */
+.media-grid{ display:grid; gap:2px; background:var(--white); cursor:pointer; height:220px; }
 .media-grid[data-n="1"]{ grid-template-columns:1fr; }
 .media-grid[data-n="2"]{ grid-template-columns:1fr 1fr; }
 .media-grid[data-n="3"]{ grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
 .media-grid[data-n="3"] .media-item:first-child{ grid-row:1/3; }
 .media-grid[data-n="4"]{ grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
-.media-item{ position:relative; overflow:hidden; background:var(--grau); }
-.media-grid[data-n="1"] .media-item{ aspect-ratio:16/9; }
-.media-grid[data-n="2"] .media-item{ aspect-ratio:1/1; }
-.media-grid[data-n="4"] .media-item{ aspect-ratio:4/3; }
-.media-grid[data-n="3"] .media-item{ aspect-ratio:auto; min-height:90px; }
+.media-item{ position:relative; overflow:hidden; background:var(--grau); min-height:0; }
 .media-item img, .media-item video{
   width:100%; height:100%; object-fit:cover;
 }
@@ -379,13 +388,21 @@ body.admin .admin-bar{ display:flex; }
 .mail-link svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .mail-link:hover{ color:var(--blau); }
 
-/* „Löschen"-Link für die EIGENE Idee (in der Byline) */
-.mine-del{
+/* „Bearbeiten"/„Löschen"-Links für die EIGENE Idee (in der Byline) */
+.mine-edit{
   margin-left:auto; background:none; border:none; padding:2px 4px;
   font-family:inherit; font-size:.74rem; font-weight:600;
   color:var(--ink-40); text-decoration:underline; text-underline-offset:2px;
 }
+.mine-edit:hover{ color:var(--blau); }
+.mine-del{
+  background:none; border:none; padding:2px 4px;
+  font-family:inherit; font-size:.74rem; font-weight:600;
+  color:var(--ink-40); text-decoration:underline; text-underline-offset:2px;
+}
 .mine-del:hover{ color:#B00013; }
+/* Im Bearbeiten-Modus: Medien/E-Mail-Felder ausblenden (bleiben unverändert) */
+.modal-box.editing .edit-hide{ display:none; }
 
 .comment{ position:relative; }
 .comment .c-del{
@@ -554,6 +571,7 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
   .fab{ display:block; }
   .toolbar{ top:57px; }
   .toolbar-inner{ padding:0 16px; }
+  .searchbox{ width:110px; }
   .tab{ padding:12px 10px 9px; font-size:.83rem; }
   main{ padding:20px 16px 90px; }
   .feed{ grid-template-columns:1fr; }
@@ -632,6 +650,7 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
       <button class="tab" role="tab" data-tab="picks" aria-selected="false">Admin Picks</button>
     </div>
     <div class="toolbar-spacer"></div>
+    <input type="search" id="searchBox" class="searchbox" placeholder="Suchen …" aria-label="Ideen durchsuchen">
     <div class="chips" id="catChips" aria-label="Kategorien"></div>
   </div>
 </div>
@@ -728,7 +747,7 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
         <div class="cat-select" id="catSelect"></div>
       </div>
 
-      <div class="field">
+      <div class="field edit-hide">
         <label>Bilder <span>· bis zu 4 · gern KI-generiert</span></label>
         <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Bilder hochladen">
           Bilder hierher ziehen oder <b>klicken zum Auswählen</b>
@@ -737,7 +756,7 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
         <div class="upload-previews" id="imgPreviews"></div>
       </div>
 
-      <div class="field">
+      <div class="field edit-hide">
         <label>Video <span>· optional, 1 Datei</span></label>
         <button class="btn btn-ghost" id="btnVideo" type="button">Video auswählen</button>
         <input type="file" id="fileVideo" accept="video/*" hidden>
@@ -749,7 +768,7 @@ footer .fine{ font-size:.72rem; color:#7E93AC; margin-top:14px; }
         <input type="text" id="fAuthor" maxlength="40" placeholder="anonym">
       </div>
 
-      <div class="field">
+      <div class="field edit-hide">
         <label for="fEmail">Deine E-Mail <span>· optional, wird am Post angezeigt</span></label>
         <input type="email" id="fEmail" maxlength="80" placeholder="vorname.nachname@bosch.com">
         <label class="consent" for="fEmailConsent">
@@ -915,13 +934,19 @@ const DB = {
   },
 
   /* Idee anlegen: Zeile einfügen → Bilder/Video in Storage laden → media-URLs setzen */
-  async addPost({title,pitch,category,author,email,prompt}, imageDataUrls, videoFile, phFallback){
+  async addPost({title,pitch,category,author,email,prompt,editHash}, imageDataUrls, videoFile, phFallback){
     const base = { title, pitch, category, author, votes:1, admin_boost:0, featured:false, media:[] };
     const row = { ...base };
-    if(email)  row.email  = email;
-    if(prompt) row.prompt = prompt;
+    if(email)    row.email     = email;
+    if(prompt)   row.prompt    = prompt;
+    if(editHash) row.edit_hash = editHash;
     let res = await sb.from("ideas").insert(row).select("id,created_at").single();
-    // Gestaffelter Fallback: fehlende optionale Spalten (prompt/email) einzeln weglassen
+    // Gestaffelter Fallback: fehlende optionale Spalten einzeln weglassen
+    if(res.error && editHash && /edit_hash/i.test(res.error.message||"")){
+      console.warn("Spalte edit_hash fehlt – Bearbeiten-SQL noch nicht ausgeführt (supabase-bearbeiten.sql).");
+      delete row.edit_hash;
+      res = await sb.from("ideas").insert(row).select("id,created_at").single();
+    }
     if(res.error && prompt && /prompt/i.test(res.error.message||"")){
       console.warn("Spalte prompt fehlt in ideas – SQL: alter table public.ideas add column prompt text;");
       delete row.prompt;
@@ -1184,9 +1209,38 @@ function toast(msg){
   t._h = setTimeout(()=>t.classList.remove("show"), 2600);
 }
 
+/* ---------- Bearbeiten eigener Ideen (Token-Mechanik) ---------- */
+let editingId = null;
+
+async function sha256Hex(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+function newEditToken(){
+  return (crypto.randomUUID ? crypto.randomUUID() + crypto.randomUUID()
+          : String(Math.random()).slice(2) + Date.now());
+}
+/* Bearbeitbar: lokal reicht "meine Idee"; in der Cloud braucht es das Token */
+function canEditPost(p){
+  return DB.cloud ? (typeof mine[p.id] === "string" && mine[p.id].length > 20)
+                  : !!mine[p.id];
+}
+
 /* ---------- Sortierung / Filter ---------- */
+let searchQ = "";
+$("#searchBox").addEventListener("input", e=>{
+  searchQ = e.target.value.trim().toLowerCase();
+  render();
+});
+
 function sortedPosts(){
   let list = [...posts];
+  if(searchQ){
+    list = list.filter(p =>
+      (p.title + " " + p.pitch + " " + (p.prompt||"") + " " + (p.author||""))
+        .toLowerCase().includes(searchQ)
+    );
+  }
   if(activeCat) list = list.filter(p => p.category === activeCat);
   switch(activeTab){
     case "neu":
@@ -1263,6 +1317,7 @@ function cardHTML(p){
         ${p.email ? `<a class="mail-link" href="mailto:${esc(p.email)}" title="Kontakt: ${esc(p.email)}">
           <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="m3 7 9 6 9-6"/></svg>
         </a>` : ""}
+        ${canEditPost(p) ? `<button class="mine-edit" data-act="mine-edit" title="Deine Idee bearbeiten">Bearbeiten</button>` : ""}
         ${mine[p.id] ? `<button class="mine-del" data-act="mine-delete" title="Deine Idee löschen">Löschen</button>` : ""}
       </div>
     </div>
@@ -1302,8 +1357,9 @@ function render(){
   const grid = $("#feedGrid");
   grid.innerHTML = list.length
     ? list.map(cardHTML).join("")
-    : `<div class="feed-empty"><b>Noch ganz leer hier.</b>
-       ${activeTab==="picks" ? "Es gibt aktuell keine Admin Picks." : "Fang klein an – poste die erste Idee."}</div>`;
+    : `<div class="feed-empty">${searchQ
+        ? `<b>Nichts gefunden.</b>Zu „${esc(searchQ)}" gibt es (noch) keine Idee – vielleicht deine Chance?`
+        : `<b>Noch ganz leer hier.</b>${activeTab==="picks" ? "Es gibt aktuell keine Admin Picks." : "Fang klein an – poste die erste Idee."}`}</div>`;
 }
 
 /* ---------- Kategorie-Chips (Toolbar + Formular) ---------- */
@@ -1380,6 +1436,21 @@ $("#feedGrid").addEventListener("click", async e => {
       break;
     }
     case "share": sharePost(post); break;
+    case "mine-edit": {
+      if(!canEditPost(post)) break;
+      editingId = post.id;
+      $("#fTitle").value  = post.title;
+      $("#fPitch").value  = post.pitch;
+      $("#fPrompt").value = post.prompt || "";
+      $("#pitchCounter").textContent  = `${post.pitch.length} / 300`;
+      $("#promptCounter").textContent = `${(post.prompt||"").length} / 1000`;
+      selectCat(post.category);
+      $("#postModalTitle").textContent = "Idee bearbeiten";
+      $("#btnPublish").innerHTML = '<span class="chev">&gt;</span> Änderungen speichern';
+      document.querySelector("#postModal .modal-box").classList.add("editing");
+      openModal("#postModal");
+      break;
+    }
     case "toggle-prompt": {
       const wrap = e.target.closest(".prompt-wrap");
       const open = wrap.classList.toggle("open");
@@ -1553,15 +1624,18 @@ $("#fPitch").addEventListener("input", e=>{
   c.classList.toggle("limit", n >= 260);
 });
 
-$("#catSelect").addEventListener("click", e=>{
-  const opt = e.target.closest(".cat-opt");
-  if(!opt) return;
-  formCat = opt.dataset.val;
+function selectCat(val){
+  formCat = val;
   $$(".cat-opt").forEach(o=>{
-    const on = o === opt;
+    const on = o.dataset.val === val;
     o.classList.toggle("active", on);
     o.style.background = on ? o.dataset.color : "";
   });
+}
+$("#catSelect").addEventListener("click", e=>{
+  const opt = e.target.closest(".cat-opt");
+  if(!opt) return;
+  selectCat(opt.dataset.val);
 });
 
 /* Bild-Upload: Dropzone + Dateiauswahl, max. 4, clientseitig komprimiert */
@@ -1646,12 +1720,54 @@ function showError(msg){
 }
 
 /* Veröffentlichen */
+function resetPostForm(){
+  editingId = null;
+  $("#postModalTitle").textContent = "Deine kleine Idee";
+  $("#btnPublish").innerHTML = '<span class="chev">&gt;</span> Idee veröffentlichen';
+  document.querySelector("#postModal .modal-box").classList.remove("editing");
+  $("#fTitle").value=""; $("#fPitch").value=""; $("#fAuthor").value=""; $("#fEmail").value=""; $("#fEmailConsent").checked=false;
+  $("#fPrompt").value="";
+  $("#pitchCounter").textContent="0 / 300";
+  $("#promptCounter").textContent="0 / 1000";
+  formImages=[]; formVideo=null; formCat=null;
+  renderImagePreviews(); $("#vidPreview").innerHTML="";
+  $$(".cat-opt").forEach(o=>{ o.classList.remove("active"); o.style.background=""; });
+}
+
 $("#btnPublish").addEventListener("click", async ()=>{
   const title = $("#fTitle").value.trim();
   const pitch = $("#fPitch").value.trim();
   if(!title)   return showError("Gib deiner Idee einen Titel.");
   if(!pitch)   return showError("Ein Satz Pitch reicht – aber einer muss sein.");
   if(!formCat) return showError("Wähle eine Kategorie.");
+
+  /* ---------- BEARBEITEN-Zweig: bestehende Idee aktualisieren ---------- */
+  if(editingId){
+    const p = posts.find(x => x.id === editingId);
+    if(!p){ editingId = null; return showError("Diese Idee existiert nicht mehr."); }
+    const newPrompt = $("#fPrompt").value.trim().slice(0, 1000);
+    if(DB.cloud){
+      const token = mine[editingId];
+      const btn = $("#btnPublish");
+      btn.disabled = true; btn.textContent = "Wird gespeichert …";
+      const { error } = await sb.rpc("edit_idea", {
+        p_id: editingId, p_token: token,
+        p_title: title, p_pitch: pitch,
+        p_prompt: newPrompt, p_category: formCat
+      });
+      btn.disabled = false;
+      btn.innerHTML = '<span class="chev">&gt;</span> Änderungen speichern';
+      if(error){
+        console.error(error);
+        return showError("Speichern fehlgeschlagen. Falls du das Bearbeiten-SQL noch nicht ausgeführt hast: supabase-bearbeiten.sql im SQL Editor starten.");
+      }
+    }
+    p.title = title; p.pitch = pitch; p.prompt = newPrompt; p.category = formCat;
+    persist(); render();
+    closeModals(); resetPostForm();
+    toast("Änderungen gespeichert");
+    return;
+  }
 
   // Cooldown: schützt vor versehentlichen Doppel-Posts und simplem Spam
   const nowTs = Date.now();
@@ -1673,12 +1789,15 @@ $("#btnPublish").addEventListener("click", async ()=>{
   const phMedia = { type:"img", src:ph(CATEGORIES[formCat].color, IC.data, formCat.toUpperCase()) };
 
   let post;
+  let editToken = null;
   if(DB.cloud){
     const btn = $("#btnPublish");
     btn.disabled = true; btn.textContent = "Wird hochgeladen …";
     try{
+      editToken = newEditToken();
       const saved = await DB.addPost(
-        { title, pitch, category:formCat, author, email, prompt:promptText },
+        { title, pitch, category:formCat, author, email, prompt:promptText,
+          editHash: await sha256Hex(editToken) },
         formImages, (formVideo && formVideo.file) || null, phMedia
       );
       post = {
@@ -1707,19 +1826,12 @@ $("#btnPublish").addEventListener("click", async ()=>{
   }
   window.__lastPublish = Date.now();
   voted[post.id] = true;      // eigener Post = erster Vote
-  mine[post.id] = true;       // als eigene Idee merken → darf selbst gelöscht werden
+  mine[post.id] = editToken || true;   // Token = Bearbeiten-Schlüssel (nur auf diesem Gerät)
   posts.unshift(post);
   persist();
 
   // Formular zurücksetzen
-  $("#fTitle").value=""; $("#fPitch").value=""; $("#fAuthor").value=""; $("#fEmail").value=""; $("#fEmailConsent").checked=false;
-  $("#fPrompt").value="";
-  $("#pitchCounter").textContent="0 / 300";
-  $("#promptCounter").textContent="0 / 1000";
-  formImages=[]; formVideo=null; formCat=null;
-  renderImagePreviews(); $("#vidPreview").innerHTML="";
-  $$(".cat-opt").forEach(o=>{ o.classList.remove("active"); o.style.background=""; });
-
+  resetPostForm();
   closeModals();
   activeTab = "neu";
   $$(".tab").forEach(x=>x.setAttribute("aria-selected", x.dataset.tab==="neu" ? "true":"false"));
@@ -1894,6 +2006,7 @@ if("serviceWorker" in navigator){
 /* ---------- Init ---------- */
 (async ()=>{
   if(DB.cloud){
+    $("#feedGrid").innerHTML = '<div class="feed-empty"><b>Lade Ideen …</b>Einen Moment, die neuesten Einfälle kommen gerade rein.</div>';
     try{
       posts = await DB.loadPosts();   // Cloud ist die Quelle der Wahrheit
     }catch(err){
